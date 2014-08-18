@@ -1,11 +1,17 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>  //<cstdio>
+#include <stdlib.h> //<cstdlib>
+#include <assert.h> //<cassert>
+
+#define SIZE 4
+
 typedef struct Graph Graph;
 typedef struct Stack Stack;
 typedef struct Node Node;
+typedef struct Queue Queue;
 
 struct Graph {
 //struct __attribute__((__packed__)) Graph {
@@ -23,17 +29,23 @@ struct Stack {
     int size;
 };
 
+struct Queue {
+    Node *head;
+    Node *tail;
+    int size;
+};
+
 //////////////////// LINKED LIST METHODS /////////////
 
 Node *initLinkedList(int val) {
-    Node *head = malloc(sizeof(Node));
+    Node *head = (Node*) malloc(sizeof(Node));
     head->val = val;
     head->next = NULL;
     return head;
 }
 
 Node* addNodeStart(Node *head, int val) {
-    Node *node = malloc(sizeof(Node));
+    Node *node = (Node*) malloc(sizeof(Node));
     node->val = val;
     node->next = head;
     return node;
@@ -42,7 +54,7 @@ Node* addNodeStart(Node *head, int val) {
 void addNodeEnd(Node *head, int val) {
 
     Node *temp;
-    Node *node = malloc(sizeof(Node));
+    Node *node = (Node*) malloc(sizeof(Node));
     node->val = val;
     
     temp = head;
@@ -67,7 +79,7 @@ void releaseList(Node *head) {
 ////////////////// STACK METHODS ////////////////////
 
 Stack * initStack(int size) {
-    Stack *stack = malloc(sizeof(Stack));
+    Stack *stack = (Stack*) malloc(sizeof(Stack));
     stack->size = size;
     stack->top = NULL;
     return stack;
@@ -79,16 +91,17 @@ int isEmpty(Stack *stack) {
 }
 
 void push(Stack *stack, int val) {
-    Node *node = malloc(sizeof(Node));
+    Node *node = (Node*) malloc(sizeof(Node));
     node->val = val;
     node->next = stack->top;
     stack->top = node;
 }
 
+// assert: stack top is not NULL
 int pop(Stack *stack) {
     int res;
     Node *temp;
-    if(stack->top == NULL) return 0;
+    assert(stack->top != NULL);
     res = stack->top->val;
     temp = stack->top;    
     stack->top = temp->next;
@@ -101,20 +114,91 @@ void releaseStack(Stack *stack) {
     free(stack);
 }
 
+///////////////////// QUEUE METHODS /////////////////
+
+Queue* initQueue(int size) {
+    Queue *queue = (Queue*) malloc(sizeof(Queue));
+    queue->size = size;
+    queue->head = NULL;
+    queue->tail = NULL;
+    return queue;
+}
+
+//Return 1 if empty
+int isEmptyQueue(Queue *queue) {
+    assert(queue != NULL);
+    if (queue->head == NULL) return 1;
+    else return 0;
+}
+
+//Insert a node at the rear of the queue
+void enqueue(Queue *queue, int val) {
+    Node *node;
+    assert(queue != NULL);
+
+    node = (Node*) malloc(sizeof(Node));
+    node->val = val;
+    node->next = NULL;
+
+    //If enqueuing first element
+    if(queue->head == NULL) {
+        queue->head = node;
+    } else {
+        queue->tail->next = node;
+    }
+    //tail will change in any case
+    queue->tail = node;
+}
+
+//Remove a node from the head of the queue
+int dequeue(Queue *queue) {
+    int res;
+    Node *temp;
+
+    assert(isEmptyQueue(queue) == 0);
+
+    temp = queue->head;
+    queue->head = temp->next;
+    res = temp->val;
+
+    free(temp);
+
+    //check of removing last element
+    if(queue->head == NULL) {
+        queue->tail = NULL;
+    }
+    return res;
+}
+
+void releaseQueue(Queue *queue) {
+    releaseList(queue->head);
+    free(queue);
+}
+
 ///////////////////// GRAPH METHODS //////////////////
 
 Graph* initGraph(int vertices) {
     int i;
-    Graph *graph = malloc(sizeof(Graph));
+    Graph *graph = (Graph*) malloc(sizeof(Graph));
     graph->V = vertices;
 
     //allocate mem for graph
-    graph->edgeMat = calloc(graph->V, sizeof(int*));
+    graph->edgeMat = (int**) calloc(graph->V, sizeof(int*));
     for(i = 0; i < graph->V; i++) {
-        graph->edgeMat[i] = calloc(graph->V, sizeof(int));
+        graph->edgeMat[i] = (int*) calloc(graph->V, sizeof(int));
     }
 
     return graph;
+}
+
+//release memory
+void releaseGraph(Graph *graph) {
+    int i;
+    for(i = 0; i < graph->V; i++) {
+        free(graph->edgeMat[i]);
+    }
+    free(graph->edgeMat);
+    free(graph);
 }
 
 void addEdge(Graph *graph, int source, int dest) {
@@ -124,6 +208,8 @@ void addEdge(Graph *graph, int source, int dest) {
         }
     }
 }
+
+//////////////// DEPTH FIRST SEARCH ////////////////
 
 void depthFirstSearch(Graph *graph, int visited[], int vertex) {
     int i;
@@ -168,20 +254,41 @@ void depthFirstSearchNonRec(Graph *graph, int visited[], int vertex) {
     releaseStack(stack);
 }
 
-//release memory
-void releaseGraph(Graph *graph) {
-    int i;
+////////////// BREADTH FIRST SEARCH ///////////////////
+
+void breadthFirstSearch(Graph *graph, int vertex) {
+    int visited[SIZE];
+    int i, currVertex;
+    Queue *queue;
     for(i = 0; i < graph->V; i++) {
-        free(graph->edgeMat[i]);
+        visited[i] = 0;    
     }
-    free(graph->edgeMat);
-    free(graph);
+    queue = initQueue(graph->V);
+    enqueue(queue, vertex);
+    
+    while(!isEmptyQueue(queue)) {
+        currVertex = dequeue(queue);
+        visited[currVertex] = 1;
+        printf(" %d", currVertex);
+
+        for(i = 0; i < graph->V; i++) {
+            //if there is an edge and that vertex is not visited
+            if((graph->edgeMat[currVertex][i] == 1) && (visited[i] == 0)) {
+                enqueue(queue, i);
+            }
+        }
+    }
+
+    releaseQueue(queue);
 }
+
+
+///////////////////////// MAIN /////////////////////////
 
 int main(int argc, char **agv) {
     int i;
-    int visited[4];
-    Graph *graph = initGraph(4);
+    int visited[SIZE];
+    Graph *graph = initGraph(SIZE);
 
     printf("%d\n", sizeof(int **));
     graph->edgeMat[0][1] = 1;
@@ -203,6 +310,9 @@ int main(int argc, char **agv) {
 
     printf("\n DFS non_rec ");
     depthFirstSearchNonRec(graph, visited, 2);
+
+    printf("\n BFS non_rec");
+    breadthFirstSearch(graph, 2);
 
     releaseGraph(graph);
     return 0;
