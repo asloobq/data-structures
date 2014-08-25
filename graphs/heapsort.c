@@ -1,6 +1,45 @@
 #include <stdio.h>
 #include <assert.h>
 
+#define NON_REC 0
+
+#ifdef NON_REC 
+    #define MAX_HEAPIFY(ARR, LEN, INDEX) max_heapify_nonrec(ARR, LEN, INDEX)
+#else 
+    #define MAX_HEAPIFY(ARR, LEN, INDEX) max_heapify(ARR, LEN, INDEX)
+#endif
+
+void
+max_heapify_nonrec(int arr[], int length, int index) {
+
+    int l, r, temp, largest, isSwapped = 1;
+
+
+    while(index < length && isSwapped) {
+
+        isSwapped = 0;
+        l = index * 2;
+        r = l + 1;
+        
+        largest = index;
+        if(l <= length && arr[l] > arr[largest]) {
+            largest = l;
+        }
+
+        if(r <= length && arr[r] > arr[largest]) {
+            largest = r;
+        }
+
+        if(largest != index) {
+            temp = arr[largest];
+            arr[largest] = arr[index];
+            arr[index] = temp;
+            index = largest;
+            isSwapped = 1;
+        }
+    }
+}
+
 void
 max_heapify(int arr[], int length, int index) {
     int l, r, largest, temp;
@@ -37,7 +76,7 @@ build_max_heap(int arr[], int length) {
     int i;
 
     for(i = length /2; i >= 1; i--) {
-        max_heapify(arr, length, i);
+        MAX_HEAPIFY(arr, length, i);
     }
 }
 
@@ -67,7 +106,7 @@ heapsort(int arr[], int length) {
         arr[1] = arr[i];
         arr[i] = temp;
         
-        max_heapify(arr, i - 1, 1);
+        MAX_HEAPIFY(arr, i - 1, 1);
         print_heap(arr, length, i);
     } 
 
@@ -99,6 +138,11 @@ main(int argc, char **argv) {
     printf("\n Heapsort =");
     print_heap(arr1, size, 0);
     
-
+    int arr2[] = {0, 100, -999, 0, 12, 4323, -3254, 3, 53, 45, 23, 324, 324, 54};
+    size= (sizeof arr2 / sizeof *arr2) - 1;
+    heapsort(arr2, size);
+    test_order_ascending(arr2, size); 
+    printf("\n Heapsort =");
+    print_heap(arr2, size, 0);
 }
 
