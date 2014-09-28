@@ -60,29 +60,15 @@ bool empty(const MyVector* vector) {
 
 
 bool full(const MyVector* vector) {
-    if(vector->mSize == vector->mCapacity) {
-        return true; 
-    } else {
-        return false;
-    }
+    return vector->mSize == vector->mCapacity;
 }
 
 void push_back(MyVector* vector, const int &number) {
     if(vector->full(vector)) {
-        //do some memory expanding trick
         //double memory size
-        int newCapacity = vector->mCapacity * 2;
-        //allocate new data block of twice the size
-        int *newData = (int*) malloc(sizeof(int) * newCapacity);
-        //copy all elements from old block to new block
-        for(size_t i = 0; i < vector->mCapacity; i++) {
-            newData[i] = vector->mData[i];
-        }
-        //free old block
-        free(vector->mData);
-        //set new values
-        vector->mData = newData;
-        vector->mCapacity = newCapacity;
+        vector->mCapacity = vector->mCapacity * 2;
+        vector->mData = (int*) realloc(vector->mData, 
+                                       sizeof(int) * vector->mCapacity);
     }
     vector->mData[vector->mSize] = number;
     vector->mSize = vector->mSize + 1;
@@ -102,7 +88,7 @@ void inc (MyVectorIterator* iter) {
 }
 
 void dec (MyVectorIterator* iter) {
-    iter->mIndex = iter->mIndex -1;
+    iter->mIndex = iter->mIndex - 1;
 }
 
 const int& deref(const MyVectorIterator* iter) {
@@ -110,14 +96,19 @@ const int& deref(const MyVectorIterator* iter) {
 }
 
 bool equal(const MyVectorIterator* iter, const MyVectorIterator other) {
-    if(iter->mVector == other.mVector && iter->mIndex == other.mIndex) {
-        return true;
-    } else {
-        return false;
-    }
+    return (iter->mVector == other.mVector && iter->mIndex == other.mIndex);
 }
 
 MyVectorIterator getDefaultIter(const MyVector* vector) {
+    /* MyVectorIterator *iter = (MyVectorIterator*) malloc(
+                              sizeof(MyVectorIterator));
+    iter->mVector = vector;
+    iter->mIndex = 0;
+    iter->inc = inc;
+    iter->dec = dec;
+    iter->deref = deref;
+    iter->equal = equal;
+    */
     MyVectorIterator iter;
     iter.mVector = vector;
     iter.mIndex = 0;
